@@ -42,11 +42,11 @@ def main():
     try:
         raw_input = sys.stdin.read().strip()
         if not raw_input:
-            print("🪙 Tokeny: -- │ 5h: -- │ Tydz: --")
+            print("🪙 Tokens: -- │ 5h: -- │ Wk: --")
             return
         data = json.loads(raw_input)
     except Exception:
-        print("🪙 Tokeny: -- │ 5h: -- │ Tydz: --")
+        print("🪙 Tokens: -- │ 5h: -- │ Wk: --")
         return
 
     # ANSI Codes
@@ -69,7 +69,7 @@ def main():
     if used_pct is None:
         used_pct = (tot_tokens / max_tokens * 100) if max_tokens else 0.0
 
-    tok_str = f"{cyan}🪙 Tokeny: {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{rst} {dim}({used_pct:.1f}% zajęte){rst}"
+    tok_str = f"{cyan}🪙 Tokens: {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{rst} {dim}({used_pct:.1f}% used){rst}"
 
     # 2. Quotas
     quota = data.get("quota") or {}
@@ -112,7 +112,7 @@ def main():
         t_wk = fmt_time(bucket_wk.get("reset_in_seconds", 0))
 
         label = f"{bold}{name}{rst}" if not is_active else f"\033[1;34m★ {name}{rst}"
-        return f"{label} 5h: {color_pct(pct_5h)} {dim}({t_5h}){rst} • Tydz: {color_pct(pct_wk)} {dim}({t_wk}){rst}"
+        return f"{label} 5h: {color_pct(pct_5h)} {dim}({t_5h}){rst} • Wk: {color_pct(pct_wk)} {dim}({t_wk}){rst}"
 
     gemini_part = bucket_str("Gemini", g_5h, g_wk, not is_claude_active)
     claude_part = bucket_str("Claude", p_5h, p_wk, is_claude_active)
