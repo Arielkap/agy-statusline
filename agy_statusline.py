@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
 Antigravity CLI (agy) Custom Statusline
-Renders real-time context token usage, 5h rolling quota, and weekly quota.
+Renders real-time context token usage and rolling/weekly quotas for:
+- Gemini (5h + weekly)
+- Gemini 4 Argon (weekly WTU quota)
+- Claude / 3P (5h + weekly)
 """
 
 import sys
 import json
+
 
 def fmt_tokens(n: int) -> str:
     if n >= 1_000_000:
@@ -13,6 +17,7 @@ def fmt_tokens(n: int) -> str:
     if n >= 1_000:
         return f"{n / 1_000:.0f}k"
     return str(n)
+
 
 def fmt_time(sec: int) -> str:
     if sec <= 0:
@@ -28,6 +33,7 @@ def fmt_time(sec: int) -> str:
     rem_h = h % 24
     return f"{d}d{rem_h}h" if rem_h > 0 else f"{d}d"
 
+
 def color_pct(pct: float) -> str:
     # Color based on remaining percentage (green -> yellow -> red)
     if pct >= 50.0:
@@ -37,6 +43,7 @@ def color_pct(pct: float) -> str:
     else:
         color = "\033[31m"  # Red
     return f"{color}{pct:.0f}%\033[0m"
+
 
 def main():
     try:
@@ -71,27 +78,44 @@ def main():
 
     tok_str = f"{cyan}🪙 Tokens: {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{rst} {dim}({used_pct:.1f}% used){rst}"
 
-    # 2. Quotas
-    quota = data.get("quota") or {}
-    
-    # Identify active model
+    # 2. Active Model Identification
     model_info = data.get("model") or {}
     model_name = str(model_info.get("id") or model_info.get("display_name") or "").lower()
-    is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p"])
 
-    # Extract Gemini buckets
+    is_argon_active = "argon" in model_name
+    is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p"])
+    is_gemini_active = not is_argon_active and not is_claude_active
+
+    # 3. Quotas Extraction
+    quota = data.get("quota") or {}
+
+    # Gemini Standard
     g_5h = quota.get("gemini-5h") or {}
     g_wk = quota.get("gemini-weekly") or {}
 
-    # Extract 3P / Claude buckets
+    # Argon 4 (WTU weekly)
+    a_5h = quota.get("gemini-argon-5h") or quota.get("argon-5h") or {}
+    a_wk = (
+        quota.get("gemini-argon-wtu-weekly")
+        or quota.get("gemini-argon-weekly")
+        or quota.get("argon-weekly")
+        or {}
+    )
+
+    # Claude / 3P
     p_5h = quota.get("3p-5h") or {}
     p_wk = quota.get("3p-weekly") or {}
 
-    # Fallback to search if key names vary
-    if not g_5h or not g_wk or not p_5h or not p_wk:
+    # Fallback search if keys differ
+    if not g_5h or not g_wk or not a_wk or not p_5h or not p_wk:
         for k, v in quota.items():
             kl = k.lower()
-            if "gemini" in kl:
+            if "argon" in kl:
+                if "5h" in kl and not a_5h:
+                    a_5h = v
+                elif not a_wk:
+                    a_wk = v
+            elif "gemini" in kl:
                 if "5h" in kl and not g_5h:
                     g_5h = v
                 elif "week" in kl and not g_wk:
@@ -102,38 +126,58 @@ def main():
                 elif "week" in kl and not p_wk:
                     p_wk = v
 
-    def bucket_str(name: str, bucket_5h: dict, bucket_wk: dict, is_active: bool) -> str:
-        f_5h = bucket_5h.get("remaining_fraction")
-        pct_5h = (f_5h * 100) if f_5h is not None else 100.0
-        t_5h = fmt_time(bucket_5h.get("reset_in_seconds", 0))
+    def render_bucket(name: str, b_5h: dict, b_wk: dict, is_active: bool, compact: bool = False) -> str:
+        label = f"\033[1;34m★ {name}{rst}" if is_active else f"{bold}{name}{rst}"
+        parts = []
 
-        f_wk = bucket_wk.get("remaining_fraction")
-        pct_wk = (f_wk * 100) if f_wk is not None else 100.0
-        t_wk = fmt_time(bucket_wk.get("reset_in_seconds", 0))
+        if b_5h and b_5h.get("remaining_fraction") is not None:
+            p5 = b_5h["remaining_fraction"] * 100
+            t5 = fmt_time(b_5h.get("reset_in_seconds", 0))
+            if compact:
+                parts.append(f"5h: {color_pct(p5)}")
+            else:
+                parts.append(f"5h: {color_pct(p5)} {dim}({t5}){rst}")
 
-        label = f"{bold}{name}{rst}" if not is_active else f"\033[1;34m★ {name}{rst}"
-        return f"{label} 5h: {color_pct(pct_5h)} {dim}({t_5h}){rst} • Wk: {color_pct(pct_wk)} {dim}({t_wk}){rst}"
+        if b_wk and b_wk.get("remaining_fraction") is not None:
+            pw = b_wk["remaining_fraction"] * 100
+            tw = fmt_time(b_wk.get("reset_in_seconds", 0))
+            if compact:
+                parts.append(f"Wk: {color_pct(pw)}")
+            else:
+                parts.append(f"Wk: {color_pct(pw)} {dim}({tw}){rst}")
 
-    gemini_part = bucket_str("Gemini", g_5h, g_wk, not is_claude_active)
-    claude_part = bucket_str("Claude", p_5h, p_wk, is_claude_active)
+        if not parts:
+            return f"{label} --"
+        return f"{label} " + " • ".join(parts)
 
-    # Adaptive output based on terminal width
-    if term_width >= 115:
-        # Full view: Tokens | Gemini 5h & Week | Claude 5h & Week
-        output = f"{tok_str}{sep}{gemini_part}{sep}{claude_part}"
-    elif term_width >= 75:
-        # Compact dual view
+    gemini_part = render_bucket("Gemini", g_5h, g_wk, is_gemini_active)
+    argon_part = render_bucket("Argon 4", a_5h, a_wk, is_argon_active)
+    claude_part = render_bucket("Claude", p_5h, p_wk, is_claude_active)
+
+    # Adaptive rendering based on terminal width
+    if term_width >= 130:
+        # Full view: Tokens | Gemini | Argon 4 | Claude
+        output = f"{tok_str}{sep}{gemini_part}{sep}{argon_part}{sep}{claude_part}"
+    elif term_width >= 90:
+        # Medium view: compact numbers
         tok_compact = f"{cyan}🪙 {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{rst} {dim}({used_pct:.0f}%){rst}"
-        active_part = claude_part if is_claude_active else gemini_part
-        other_part = gemini_part if is_claude_active else claude_part
-        output = f"{tok_compact}{sep}{active_part}{sep}{other_part}"
+        gemini_c = render_bucket("Gemini", g_5h, g_wk, is_gemini_active, compact=True)
+        argon_c = render_bucket("Argon 4", a_5h, a_wk, is_argon_active, compact=True)
+        claude_c = render_bucket("Claude", p_5h, p_wk, is_claude_active, compact=True)
+        output = f"{tok_compact}{sep}{gemini_c}{sep}{argon_c}{sep}{claude_c}"
     else:
-        # Ultra-compact for small windows: show active model limits only
+        # Small view: tokens + active model + Argon warning if empty
         tok_compact = f"{cyan}🪙 {fmt_tokens(tot_tokens)}{rst}"
-        active_part = claude_part if is_claude_active else gemini_part
-        output = f"{tok_compact}{sep}{active_part}"
+        active_part = (
+            argon_part if is_argon_active else (claude_part if is_claude_active else gemini_part)
+        )
+        if not is_argon_active and a_wk.get("remaining_fraction") == 0:
+            output = f"{tok_compact}{sep}{active_part}{sep}\033[31mArgon: 0%\033[0m"
+        else:
+            output = f"{tok_compact}{sep}{active_part}"
 
     print(output)
+
 
 if __name__ == "__main__":
     main()
