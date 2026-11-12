@@ -2,7 +2,7 @@
 """
 Antigravity CLI (agy) Custom Statusline
 Renders real-time context token usage and rolling/weekly quotas for:
-- Gemini (5h + weekly)
+- Gemini / Gemini 4 Hydrogen (5h + weekly)
 - Gemini 4 Argon (weekly WTU quota)
 - Claude / 3P (5h + weekly)
 """
@@ -80,11 +80,15 @@ def main():
 
     # 2. Active Model Identification
     model_info = data.get("model") or {}
-    model_name = str(model_info.get("id") or model_info.get("display_name") or "").lower()
+    model_name = " ".join(
+        str(model_info.get(k) or "") for k in ("id", "display_name")
+    ).lower()
 
     is_argon_active = "argon" in model_name
     is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p"])
+    is_hydrogen_active = "hydrogen" in model_name
     is_gemini_active = not is_argon_active and not is_claude_active
+    gemini_label = "Hydrogen" if is_hydrogen_active else "Gemini"
 
     # 3. Quotas Extraction
     quota = data.get("quota") or {}
@@ -115,7 +119,7 @@ def main():
                     a_5h = v
                 elif not a_wk:
                     a_wk = v
-            elif "gemini" in kl:
+            elif "gemini" in kl or "hydrogen" in kl:
                 if "5h" in kl and not g_5h:
                     g_5h = v
                 elif "week" in kl and not g_wk:
@@ -150,18 +154,18 @@ def main():
             return f"{label} --"
         return f"{label} " + " • ".join(parts)
 
-    gemini_part = render_bucket("Gemini", g_5h, g_wk, is_gemini_active)
+    gemini_part = render_bucket(gemini_label, g_5h, g_wk, is_gemini_active)
     argon_part = render_bucket("Argon 4", a_5h, a_wk, is_argon_active)
     claude_part = render_bucket("Claude", p_5h, p_wk, is_claude_active)
 
     # Adaptive rendering based on terminal width
     if term_width >= 130:
-        # Full view: Tokens | Gemini | Argon 4 | Claude
+        # Full view: Tokens | Gemini/Hydrogen | Argon 4 | Claude
         output = f"{tok_str}{sep}{gemini_part}{sep}{argon_part}{sep}{claude_part}"
     elif term_width >= 90:
         # Medium view: compact numbers
         tok_compact = f"{cyan}🪙 {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{rst} {dim}({used_pct:.0f}%){rst}"
-        gemini_c = render_bucket("Gemini", g_5h, g_wk, is_gemini_active, compact=True)
+        gemini_c = render_bucket(gemini_label, g_5h, g_wk, is_gemini_active, compact=True)
         argon_c = render_bucket("Argon 4", a_5h, a_wk, is_argon_active, compact=True)
         claude_c = render_bucket("Claude", p_5h, p_wk, is_claude_active, compact=True)
         output = f"{tok_compact}{sep}{gemini_c}{sep}{argon_c}{sep}{claude_c}"

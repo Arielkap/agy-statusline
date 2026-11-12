@@ -6,18 +6,18 @@
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
 A lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
-Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits for **Gemini**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer.
+Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits for **Gemini / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer.
 
 ---
 
 ## 📸 Preview
 
 ```text
-🪙 Tokens: 103k/1.0M (8.2% used) │ ★ Gemini 5h: 96% (3m) • Wk: 89% (5d14h) │ Argon 4 Wk: 0% (5d18h) │ Claude 5h: 100% (4h54m) • Wk: 43% (2d22h)
+🪙 Tokens: 103k/1.0M (8.2% used) │ ★ Hydrogen 5h: 96% (3m) • Wk: 89% (5d14h) │ Argon 4 Wk: 0% (5d18h) │ Claude 5h: 100% (4h54m) • Wk: 43% (2d22h)
 ```
 
 ### Responsive Terminal Layouts
-- **Wide Screens (≥ 130 columns):** Full layout — context window tokens + Gemini quotas (5h / weekly) + Argon 4 quota (weekly WTU) + Claude/3P quotas (5h / weekly) with exact reset countdowns.
+- **Wide Screens (≥ 130 columns):** Full layout — context window tokens + Gemini / Hydrogen quotas (5h / weekly) + Argon 4 quota (weekly WTU) + Claude/3P quotas (5h / weekly) with exact reset countdowns.
 - **Medium Screens (90–129 columns):** Compact tokens badge + compact percentages for all active quota buckets without verbose timers.
 - **Narrow Screens (< 90 columns):** Minimalist view focused solely on the currently active model (with automatic red warning if Argon 4 is depleted).
 
@@ -29,7 +29,7 @@ Renders real-time session context token usage, 5-hour rolling quotas, and weekly
 - ⚡ **Gemini 4 Argon WTU Tracking:** Monitors specialized weekly Work-Through-Units (`gemini-argon-wtu-weekly`) and highlights depleted limits (red `0%`) with reset time.
 - ⏳ **5-Hour Rolling Quotas:** Remaining quota percentage and exact countdown to reset (`Xh Ym` / `Xm`).
 - 📅 **Weekly Quota Tracking:** Long-term quota capacity and reset schedule (`Xd Yh`).
-- 🌟 **Active Model Detection:** Automatically highlights the currently active model with a star (`★`).
+- 🌟 **Active Model Detection:** Automatically highlights the currently active model with a star (`★`) and dynamically labels the standard Gemini bucket as `Hydrogen` when running on **Gemini 4 Hydrogen** (or `Gemini` for Flash models).
 - 🎨 **Adaptive ANSI Color Coding:**
   - 🟢 **≥ 50%** remaining — Safe (Green)
   - 🟡 **20% – 50%** — Warning (Yellow)
@@ -90,7 +90,7 @@ The installer will:
 You can test the statusline anytime by piping mock telemetry JSON into stdin:
 
 ```bash
-echo '{"terminal_width": 140, "model": {"display_name": "Gemini 3.8 Flash"}, "context_window": {"total_input_tokens": 125000, "total_output_tokens": 25000, "context_window_size": 1048576, "used_percentage": 14.3}, "quota": {"gemini-5h": {"remaining_fraction": 0.85, "reset_in_seconds": 3600}, "gemini-weekly": {"remaining_fraction": 0.95, "reset_in_seconds": 518400}, "gemini-argon-wtu-weekly": {"remaining_fraction": 0.0, "reset_in_seconds": 498000}, "3p-5h": {"remaining_fraction": 1.0, "reset_in_seconds": 18000}, "3p-weekly": {"remaining_fraction": 0.5, "reset_in_seconds": 259200}}}' | python3 agy_statusline.py
+echo '{"terminal_width": 140, "model": {"id": "gemini-4-hydrogen-high", "display_name": "Gemini 4 Hydrogen (High)"}, "context_window": {"total_input_tokens": 125000, "total_output_tokens": 25000, "context_window_size": 1048576, "used_percentage": 14.3}, "quota": {"gemini-5h": {"remaining_fraction": 0.85, "reset_in_seconds": 3600}, "gemini-weekly": {"remaining_fraction": 0.95, "reset_in_seconds": 518400}, "gemini-argon-wtu-weekly": {"remaining_fraction": 1.0, "reset_in_seconds": 498000}, "3p-5h": {"remaining_fraction": 1.0, "reset_in_seconds": 18000}, "3p-weekly": {"remaining_fraction": 0.5, "reset_in_seconds": 259200}}}' | python3 agy_statusline.py
 ```
 
 ---
