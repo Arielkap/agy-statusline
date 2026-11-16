@@ -84,10 +84,12 @@ def main():
         str(model_info.get(k) or "") for k in ("id", "display_name")
     ).lower()
 
+    is_orchestrator_active = "orchestrator" in model_name
     is_argon_active = "argon" in model_name
     is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p"])
-    is_hydrogen_active = "hydrogen" in model_name
-    is_gemini_active = not is_argon_active and not is_claude_active
+    is_flash_active = "flash" in model_name
+    is_hydrogen_active = "hydrogen" in model_name or is_orchestrator_active or not is_flash_active
+    is_gemini_active = (not is_argon_active and not is_claude_active) or is_orchestrator_active
     gemini_label = "Hydrogen" if is_hydrogen_active else "Gemini"
 
     # 3. Quotas Extraction
