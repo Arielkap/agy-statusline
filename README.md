@@ -6,7 +6,7 @@
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
 A lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
-Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits for **Gemini / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer.
+Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits for **Gemini / Gemini 4 Neon / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer.
 
 ---
 
@@ -29,7 +29,7 @@ Renders real-time session context token usage, 5-hour rolling quotas, and weekly
 - ⚡ **Gemini 4 Argon WTU Tracking:** Monitors specialized weekly Work-Through-Units (`gemini-argon-wtu-weekly`) and highlights depleted limits (red `0%`) with reset time.
 - ⏳ **5-Hour Rolling Quotas:** Remaining quota percentage and exact countdown to reset (`Xh Ym` / `Xm`).
 - 📅 **Weekly Quota Tracking:** Long-term quota capacity and reset schedule (`Xd Yh`).
-- 🌟 **Active Model Detection:** Automatically highlights the currently active model with a star (`★`) and dynamically labels the standard Gemini bucket as `Hydrogen` when running on **Gemini 4 Hydrogen** or **Orchestrator (Argon)** (highlighting both `★ Hydrogen` and `★ Argon 4` in orchestrator mode, and `Gemini` for Flash models).
+- 🌟 **Active Model Detection:** Automatically highlights the currently active model with a star (`★`) and dynamically labels the standard Gemini bucket as `Neon` (for **Gemini 4 Neon** and **Orchestrator (Neon)**), `Hydrogen` (for **Gemini 4 Hydrogen** and **Orchestrator (Argon)**, highlighting both `★ Hydrogen` and `★ Argon 4`), or `Gemini` (for Flash/other models).
 - 🎨 **Adaptive ANSI Color Coding:**
   - 🟢 **≥ 50%** remaining — Safe (Green)
   - 🟡 **20% – 50%** — Warning (Yellow)

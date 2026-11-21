@@ -2,7 +2,7 @@
 """
 Antigravity CLI (agy) Custom Statusline
 Renders real-time context token usage and rolling/weekly quotas for:
-- Gemini / Gemini 4 Hydrogen (5h + weekly)
+- Gemini / Gemini 4 Neon / Gemini 4 Hydrogen (5h + weekly)
 - Gemini 4 Argon (weekly WTU quota)
 - Claude / 3P (5h + weekly)
 """
@@ -85,12 +85,19 @@ def main():
     ).lower()
 
     is_orchestrator_active = "orchestrator" in model_name
-    is_argon_active = "argon" in model_name
-    is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p"])
+    is_neon_active = "neon" in model_name
+    is_argon_active = "argon" in model_name or "g1-pro" in model_name
+    is_claude_active = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p", "gpt"])
     is_flash_active = "flash" in model_name
-    is_hydrogen_active = "hydrogen" in model_name or is_orchestrator_active or not is_flash_active
+    is_hydrogen_active = "hydrogen" in model_name or (is_orchestrator_active and not is_neon_active)
     is_gemini_active = (not is_argon_active and not is_claude_active) or is_orchestrator_active
-    gemini_label = "Hydrogen" if is_hydrogen_active else "Gemini"
+
+    if is_neon_active:
+        gemini_label = "Neon"
+    elif is_hydrogen_active:
+        gemini_label = "Hydrogen"
+    else:
+        gemini_label = "Gemini"
 
     # 3. Quotas Extraction
     quota = data.get("quota") or {}
@@ -121,7 +128,7 @@ def main():
                     a_5h = v
                 elif not a_wk:
                     a_wk = v
-            elif "gemini" in kl or "hydrogen" in kl:
+            elif any(x in kl for x in ["gemini", "hydrogen", "neon"]):
                 if "5h" in kl and not g_5h:
                     g_5h = v
                 elif "week" in kl and not g_wk:
