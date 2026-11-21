@@ -6,15 +6,36 @@
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
 A lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
-Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits for **Gemini / Gemini 4 Neon / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer.
+Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for **Gemini / Gemini 4 Neon / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
 
 ---
 
 ## 📸 Preview
 
 ```text
-🪙 Tokens: 103k/1.0M (8.2% used) │ ★ Hydrogen 5h: 96% (3m) • Wk: 89% (5d14h) │ Argon 4 Wk: 0% (5d18h) │ Claude 5h: 100% (4h54m) • Wk: 43% (2d22h)
+◈ 60k/524k ▰▰▰▰▰▰▰▱ 11.4% used ▕ ◆ ⚡ Neon 5h ▰▰▰▰▰▱ 82% (2h) • Wk ▰▰▱▱▱▱ 35% (6d) ▕ ☄ Argon 4 Wk ▰▰▰▰▰▰ 100% (5d18h) ▕ ❖ Claude 5h ▰▰▰▰▰▰ 100% (5h) • Wk ▰▱▱▱▱▱ 12% (3d)
 ```
+
+## 🎨 Themes
+
+| Theme | Palette | Icons / bars |
+| :-- | :-- | :-- |
+| `neon` (default) | cyan / magenta / violet | ⚡ 💠 ☄ ❖ `▰▱` |
+| `ember` | orange / red / gold | 🌋 💧 ⚔️ 🛡️ `█░` |
+| `matrix` | greens | λ ∆ Ω Ψ `▓░` |
+| `beskar` | steel / gold | ⚔ ⛏ ☠ ⚜ `■□` |
+| `arctic` | ice blue / white | ✺ ❆ ◇ ✱ `▮▯` |
+| `sunset` | pink / orange / purple | 🌅 🌴 🔮 🦋 `●○` |
+| `luna` | deep purple / lavender | 🔮 ✧ ✦ ❋ `◆◇` |
+
+Switch on the fly (the choice is stored in `~/.agy_statusline_theme`, shared by all terminals):
+
+```bash
+th              # next theme (zsh alias installed by install.sh)
+th prev | th list | th ember
+```
+
+Inside `agy`: type `/th` for a picker, or `/th <name>` (run `/skills reload` once after installing). Theme resolution order: `argv[1]`, env `AGY_STATUSLINE_THEME`, the theme file, then `neon`.
 
 ### Responsive Terminal Layouts
 - **Wide Screens (≥ 130 columns):** Full layout — context window tokens + Gemini / Hydrogen quotas (5h / weekly) + Argon 4 quota (weekly WTU) + Claude/3P quotas (5h / weekly) with exact reset countdowns.
@@ -52,8 +73,9 @@ chmod +x install.sh
 ```
 
 The installer will:
-1. Symlink `agy_statusline.py` to `~/bin/agy_statusline.py`.
-2. Automatically configure `~/.gemini/antigravity-cli/settings.json` with the necessary statusline hook and permissions.
+1. Symlink `agy_statusline.py` to `~/bin/agy_statusline.py` and `agy-theme` to `~/bin/agy-theme`.
+2. Install the `/th` skill into `~/.gemini/skills/th` and add the `th` alias to `~/.zshrc`.
+3. Automatically configure `~/.gemini/antigravity-cli/settings.json` with the necessary statusline hook and permissions.
 
 ---
 

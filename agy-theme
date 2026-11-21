@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# agy-theme - switch the agy statusline theme on the fly.
+#   agy-theme            -> next theme (cycle)
+#   agy-theme prev       -> previous theme
+#   agy-theme ember      -> set a specific theme
+#   agy-theme list       -> show themes (current marked with *)
+set -euo pipefail
+
+THEMES=(neon ember matrix beskar arctic sunset luna)
+FILE="${HOME}/.agy_statusline_theme"
+cur="$(cat "${FILE}" 2>/dev/null || echo neon)"
+
+idx=0
+for i in "${!THEMES[@]}"; do [[ "${THEMES[$i]}" == "$cur" ]] && idx=$i; done
+n=${#THEMES[@]}
+arg="${1:-next}"
+
+case "$arg" in
+  next)  new="${THEMES[$(( (idx + 1) % n ))]}" ;;
+  prev)  new="${THEMES[$(( (idx + n - 1) % n ))]}" ;;
+  list)  for t in "${THEMES[@]}"; do [[ "$t" == "$cur" ]] && echo "* $t" || echo "  $t"; done; exit 0 ;;
+  *)
+    ok=0; for t in "${THEMES[@]}"; do [[ "$t" == "$arg" ]] && ok=1; done
+    if [[ $ok -eq 0 ]]; then echo "Unknown theme '$arg'. Available: ${THEMES[*]}" >&2; exit 1; fi
+    new="$arg" ;;
+esac
+
+echo "$new" > "${FILE}"
+echo "Statusline theme: ${new}  (applies on next agy redraw, i.e. your next message)"
