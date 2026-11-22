@@ -17,6 +17,11 @@ import json
 import os
 import sys
 
+if sys.platform == "win32":
+    for _stream in (sys.stdin, sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+
 RST = "\033[0m"
 BOLD = "\033[1m"
 
@@ -93,7 +98,7 @@ def pick_theme() -> dict:
         name = os.environ.get("AGY_STATUSLINE_THEME", "")
     if not name:
         try:
-            with open(os.path.expanduser("~/.agy_statusline_theme")) as f:
+            with open(os.path.expanduser("~/.agy_statusline_theme"), encoding="utf-8") as f:
                 name = f.read().strip()
         except OSError:
             pass
@@ -147,7 +152,7 @@ def main():
         return
 
     sep = f" {frame}{th['sep']}{RST} "
-    term_width = data.get("terminal_width", 120)
+    term_width = data.get("terminal_width") or 120
 
     # 1. Context tokens
     cw = data.get("context_window") or {}

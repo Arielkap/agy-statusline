@@ -63,7 +63,9 @@ Inside `agy`: type `/th` for a picker, or `/th <name>` (run `/skills reload` onc
 
 ## 🛠️ Quick Installation
 
-### Option 1: One-Line Auto Install
+### macOS / Linux
+
+#### Option 1: One-Line Auto Install
 
 Clone the repository and run the automated installer:
 
@@ -79,9 +81,7 @@ The installer will:
 2. Install the `/th` skill into `~/.gemini/skills/th` and add the `th` alias to `~/.zshrc`.
 3. Automatically configure `~/.gemini/antigravity-cli/settings.json` with the necessary statusline hook and permissions.
 
----
-
-### Option 2: Manual Setup
+#### Option 2: Manual Setup
 
 1. **Clone or copy the script:**
    ```bash
@@ -106,6 +106,48 @@ The installer will:
    ```
 
    > **Tip:** Setting `"stack_with_default": true` preserves Antigravity's built-in footer (git branch, keybindings) while stacking your live token/quota metrics right below it.
+
+---
+
+### Windows (PowerShell / Windows Terminal)
+
+#### Option 1: One-Line Auto Install
+
+Open **Windows Terminal (PowerShell)** and run:
+
+```powershell
+irm https://raw.githubusercontent.com/Arielkap/agy-statusline/main/install.ps1 | iex
+```
+
+Or clone first and run locally:
+
+```powershell
+git clone https://github.com/Arielkap/agy-statusline.git "$env:USERPROFILE\.agy-statusline"
+cd "$env:USERPROFILE\.agy-statusline"
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+The installer will:
+1. Verify Python 3.8+ and install `agy_statusline.py`, `agy_theme.py`, `agy-theme.cmd`, and `th.cmd` into `%USERPROFILE%\bin` (and add it to your User `PATH`).
+2. Install the `/th` skill into `%USERPROFILE%\.gemini\skills\th`.
+3. Configure `%USERPROFILE%\.gemini\antigravity-cli\settings.json` with `cmd /c`-safe quoting (handles spaces in Windows usernames) and UTF-8 encoding.
+
+Open a **new** Windows Terminal tab, launch `agy`, run `/skills reload`, and try `/th` (or `th` / `th ember` in PowerShell or CMD).
+
+#### Option 2: Manual Setup (Windows)
+
+In `%USERPROFILE%\.gemini\antigravity-cli\settings.json` (replace `<username>` with your Windows user folder):
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python \"C:\\Users\\<username>\\bin\\agy_statusline.py\"",
+    "enabled": true,
+    "stack_with_default": true
+  }
+}
+```
 
 ---
 
