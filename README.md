@@ -1,11 +1,13 @@
-# AGY Statusline 🚀
+# AGY Pulse ⚡
+
+> *Real-time token & quota pulse for Google's Antigravity CLI (`agy`).*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.8+](https://img.shields.io/badge/Python-3.8+-brightgreen.svg)](https://www.python.org/)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-orange.svg)]()
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
-A lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
+**AGY Pulse** (`agy-statusline`) is a lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
 Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for **Gemini / Gemini 4 Neon / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
 
 ---
