@@ -15,7 +15,10 @@ Theme selection (first match wins):
 
 import json
 import os
+import re
+import shutil
 import sys
+import unicodedata
 
 if sys.platform == "win32":
     for _stream in (sys.stdin, sys.stdout, sys.stderr):
@@ -24,6 +27,80 @@ if sys.platform == "win32":
 
 RST = "\033[0m"
 BOLD = "\033[1m"
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+def _char_width(ch: str, next_ch: str = "") -> int:
+    if unicodedata.combining(ch) or unicodedata.category(ch) in ("Mn", "Me", "Cf"):
+        return 0
+    if next_ch == "\ufe0f":
+        return 2
+    if unicodedata.east_asian_width(ch) in ("W", "F"):
+        return 2
+    return 1
+
+
+def visible_width(s: str) -> int:
+    plain = _ANSI_RE.sub("", s)
+    total = 0
+    n = len(plain)
+    for i, ch in enumerate(plain):
+        nxt = plain[i + 1] if i + 1 < n else ""
+        total += _char_width(ch, nxt)
+    return total
+
+
+def truncate_ansi(s: str, max_width: int) -> str:
+    if max_width <= 0:
+        return ""
+    if visible_width(s) <= max_width:
+        return s
+    limit = max(1, max_width - 1)
+    out = []
+    width = 0
+    i = 0
+    n = len(s)
+    while i < n:
+        m = _ANSI_RE.match(s, i)
+        if m:
+            out.append(m.group(0))
+            i = m.end()
+            continue
+        ch = s[i]
+        nxt = s[i + 1] if i + 1 < n else ""
+        w = _char_width(ch, nxt)
+        if width + w > limit:
+            break
+        out.append(ch)
+        width += w
+        i += 1
+        if nxt == "\ufe0f":
+            out.append(nxt)
+            i += 1
+    return "".join(out) + f"{RST}…"
+
+
+def detect_width(data: dict) -> int:
+    tw = data.get("terminal_width")
+    if isinstance(tw, (int, float)) and tw > 0:
+        return int(tw)
+    env_cols = os.environ.get("COLUMNS", "")
+    if env_cols.isdigit() and int(env_cols) > 0:
+        return int(env_cols)
+    cols = shutil.get_terminal_size(fallback=(0, 0)).columns
+    if cols > 0:
+        return cols
+    try:
+        fd = os.open("/dev/tty", os.O_RDONLY)
+        try:
+            cols = os.get_terminal_size(fd).columns
+            if cols > 0:
+                return cols
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+    return 80
 
 
 def c(n: int) -> str:
@@ -152,7 +229,8 @@ def main():
         return
 
     sep = f" {frame}{th['sep']}{RST} "
-    term_width = data.get("terminal_width") or 120
+    term_width = detect_width(data)
+    budget = max(20, term_width - 2)
 
     # 1. Context tokens
     cw = data.get("context_window") or {}
@@ -220,7 +298,14 @@ def main():
                 elif "week" in kl and not p_wk:
                     p_wk = v
 
-    def render_bucket(name: str, b_5h: dict, b_wk: dict, active: bool, compact: bool = False) -> str:
+    def render_bucket(
+        name: str,
+        b_5h: dict,
+        b_wk: dict,
+        active: bool,
+        bar_width: int = 6,
+        show_timers: bool = True,
+    ) -> str:
         icon = th["icons"].get(name, "•")
         if active:
             label = f"{th['active']}{BOLD}{th['star']} {icon} {name}{RST}"
@@ -231,36 +316,52 @@ def main():
             if b and b.get("remaining_fraction") is not None:
                 p = b["remaining_fraction"] * 100
                 col = pct_color(p)
-                txt = f"{dim}{tag}{RST} {bar(p, 4 if compact else 6)} {col}{p:.0f}%{RST}"
-                if not compact:
+                if bar_width > 0:
+                    txt = f"{dim}{tag}{RST} {bar(p, bar_width)} {col}{p:.0f}%{RST}"
+                else:
+                    txt = f"{dim}{tag}{RST} {col}{p:.0f}%{RST}"
+                if show_timers:
                     txt += f" {dim}({fmt_time(b.get('reset_in_seconds', 0))}){RST}"
                 parts.append(txt)
         if not parts:
             return f"{label} {dim}--{RST}"
         return f"{label} " + f" {dim}•{RST} ".join(parts)
 
-    def buckets(compact: bool):
+    def buckets(bar_width: int, show_timers: bool):
         return (
-            render_bucket(gemini_label, g_5h, g_wk, is_gemini_active, compact),
-            render_bucket("Argon 4", a_5h, a_wk, is_argon, compact),
-            render_bucket("Claude", p_5h, p_wk, is_claude, compact),
+            render_bucket(gemini_label, g_5h, g_wk, is_gemini_active, bar_width, show_timers),
+            render_bucket("Argon 4", a_5h, a_wk, is_argon, bar_width, show_timers),
+            render_bucket("Claude", p_5h, p_wk, is_claude, bar_width, show_timers),
         )
 
-    if term_width >= 130:
-        g, a, cl = buckets(False)
-        output = f"{tok_str}{sep}{g}{sep}{a}{sep}{cl}"
-    elif term_width >= 90:
-        tok_c = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{RST} {dim}({used_pct:.0f}%){RST}"
-        g, a, cl = buckets(True)
-        output = f"{tok_c}{sep}{g}{sep}{a}{sep}{cl}"
-    else:
-        tok_c = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}{RST}"
-        g, a, cl = buckets(True)
+    tok_med = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{RST} {dim}({used_pct:.0f}%){RST}"
+    tok_short = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}{RST}"
+
+    def active_only(bar_width: int) -> str:
+        g, a, cl = buckets(bar_width, False)
         active_part = a if is_argon else (cl if is_claude else g)
         if not is_argon and a_wk.get("remaining_fraction") == 0:
-            output = f"{tok_c}{sep}{active_part}{sep}{th['low']}Argon: 0%{RST}"
-        else:
-            output = f"{tok_c}{sep}{active_part}"
+            return f"{tok_short}{sep}{active_part}{sep}{th['low']}Argon: 0%{RST}"
+        return f"{tok_short}{sep}{active_part}"
+
+    # Pick the richest layout whose actual rendered width fits inside the terminal
+    candidates = (
+        lambda: sep.join((tok_str, *buckets(6, True))),   # Full: token bar + 6-char bars + timers
+        lambda: sep.join((tok_med, *buckets(4, True))),   # Medium-full: compact tokens + 4-char bars + timers
+        lambda: sep.join((tok_med, *buckets(4, False))),  # Compact: all buckets + 4-char bars, no timers
+        lambda: sep.join((tok_med, *buckets(0, False))),  # Tight: all buckets, percentages only
+        lambda: active_only(4),                           # Narrow: active model + 4-char bars
+        lambda: active_only(0),                           # Ultra-narrow: active model, percentages only
+    )
+
+    output = ""
+    for build in candidates:
+        candidate = build()
+        output = candidate
+        if visible_width(candidate) <= budget:
+            break
+    else:
+        output = truncate_ansi(output, budget)
 
     print(output)
 

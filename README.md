@@ -39,10 +39,13 @@ th prev | th list | th ember
 
 Inside `agy`: type `/th` for a picker, or `/th <name>` (run `/skills reload` once after installing). Theme resolution order: `argv[1]`, env `AGY_STATUSLINE_THEME`, the theme file, then `neon`.
 
-### Responsive Terminal Layouts
-- **Wide Screens (≥ 130 columns):** Full layout — context window tokens + Gemini / Hydrogen quotas (5h / weekly) + Argon 4 quota (weekly WTU) + Claude/3P quotas (5h / weekly) with exact reset countdowns.
-- **Medium Screens (90–129 columns):** Compact tokens badge + compact percentages for all active quota buckets without verbose timers.
-- **Narrow Screens (< 90 columns):** Minimalist view focused solely on the currently active model (with automatic red warning if Argon 4 is depleted).
+### Responsive Terminal Layouts (Auto-Fit)
+AGY Pulse measures the actual rendered display width (stripping ANSI codes and accounting for wide Unicode/emoji glyphs) and automatically picks the richest layout that fits inside the terminal width:
+- **Full:** Token progress bar + all 3 quota pools with 6-block bars and reset countdowns.
+- **Medium-Full:** Compact token badge + all 3 pools with 4-block bars and reset countdowns.
+- **Compact:** Compact token badge + all 3 pools with 4-block bars (no timers).
+- **Tight:** Compact token badge + all 3 pools as percentages (no bars).
+- **Narrow / Ultra-Narrow:** Minimalist view focused on the active model (with automatic red warning if Argon 4 is depleted), with ANSI-safe truncation as a final guard.
 
 ---
 
