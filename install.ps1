@@ -18,9 +18,9 @@ $SkillDir = Join-Path $env:USERPROFILE ".gemini\skills\th"
 
 function Find-Python {
     $candidates = @(
-        @{ Exe = "py"; Prefix = @("-3"); Display = "py -3" },
         @{ Exe = "python"; Prefix = @(); Display = "python" },
-        @{ Exe = "python3"; Prefix = @(); Display = "python3" }
+        @{ Exe = "python3"; Prefix = @(); Display = "python3" },
+        @{ Exe = "py"; Prefix = @("-3"); Display = "py -3" }
     )
     foreach ($c in $candidates) {
         $cmd = Get-Command $c.Exe -ErrorAction SilentlyContinue
@@ -161,10 +161,16 @@ with open(settings_path, "w", encoding="utf-8", newline="\n") as f:
     f.write("\n")
 '@
 
-& $py.Exe @($py.Prefix + @("-c", $pyUpdate, $SettingsFile, $statusLineCommand))
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to update $SettingsFile"
-    exit 1
+$tmpPy = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "agy_setup_" + [System.Guid]::NewGuid().ToString("N") + ".py")
+try {
+    [System.IO.File]::WriteAllText($tmpPy, $pyUpdate, $utf8NoBom)
+    & $py.Exe @($py.Prefix + @($tmpPy, $SettingsFile, $statusLineCommand))
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to update $SettingsFile"
+        exit 1
+    }
+} finally {
+    Remove-Item -Force -ErrorAction SilentlyContinue $tmpPy
 }
 
 Write-Host "==> Running self-test..."
