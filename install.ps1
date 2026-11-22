@@ -123,7 +123,7 @@ Write-Host "==> Installing /th skill into $SkillDir"
 New-Item -ItemType Directory -Force -Path $SkillDir | Out-Null
 $skillSrc = Join-Path $SourceDir "skills\th\SKILL.md"
 $skillContent = [System.IO.File]::ReadAllText($skillSrc, $utf8NoBom)
-$skillContent = $skillContent.Replace("~/bin/agy-theme", "`"$ThemeCmdPath`"")
+$skillContent = $skillContent.Replace("~/bin/agy-theme", "agy-theme")
 [System.IO.File]::WriteAllText((Join-Path $SkillDir "SKILL.md"), $skillContent, $utf8NoBom)
 
 # Configure settings.json
