@@ -136,13 +136,13 @@ Open a **new** Windows Terminal tab, launch `agy`, run `/skills reload`, and try
 
 #### Option 2: Manual Setup (Windows)
 
-In `%USERPROFILE%\.gemini\antigravity-cli\settings.json` (replace `<username>` with your Windows user folder):
+In `%USERPROFILE%\.gemini\antigravity-cli\settings.json` (ensure `%USERPROFILE%\bin` is in `PATH` and contains `agy_statusline.cmd` — this avoids space/quote issues in Windows usernames):
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "python \"C:\\Users\\<username>\\bin\\agy_statusline.py\"",
+    "command": "agy_statusline.cmd",
     "enabled": true,
     "stack_with_default": true
   }

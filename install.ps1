@@ -133,7 +133,18 @@ if (-not (Test-Path $SettingsFile)) {
     [System.IO.File]::WriteAllText($SettingsFile, "{}`n", $utf8NoBom)
 }
 
-$statusLineCommand = "$PyCmd `"$TargetScript`""
+$statusLineCommand = "agy_statusline.cmd"
+if ($PyCmd -notmatch '"') {
+    try {
+        $fso = New-Object -ComObject Scripting.FileSystemObject
+        $shortScript = $fso.GetFile($TargetScript).ShortPath
+        if ($shortScript -and ($shortScript -notmatch '\s')) {
+            $statusLineCommand = "$PyCmd $shortScript"
+        }
+    } catch {
+        # Fallback to agy_statusline.cmd in %USERPROFILE%\bin (PATH)
+    }
+}
 
 $pyUpdate = @'
 import json
