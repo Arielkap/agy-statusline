@@ -8,14 +8,14 @@
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
 **AGY Pulse** (`agy-statusline`) is a lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
-Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for **Gemini / Gemini 4 Neon / Gemini 4 Hydrogen**, **Gemini 4 Argon**, and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
+Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for the unified **GEMINI MODELS** pool (**Gemini 4 Neon**, **Gemini 4 Argon**, **Gemini 4 Hydrogen**, **Orchestrator (Neon)**, **Orchestrator (Argon)**, **Gemini 3.8 Flash**) and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
 
 ---
 
 ## 📸 Preview
 
 ```text
-◈ 60k/524k ▰▰▰▰▰▰▰▱ 11.4% used ▕ ◆ ⚡ Neon 5h ▰▰▰▰▰▱ 82% (2h) • Wk ▰▰▱▱▱▱ 35% (6d) ▕ ☄ Argon 4 Wk ▰▰▰▰▰▰ 100% (5d18h) ▕ ❖ Claude 5h ▰▰▰▰▰▰ 100% (5h) • Wk ▰▱▱▱▱▱ 12% (3d)
+◈ 60k/1.0M ▰▰▰▰▰▰▰▱ 5.7% used ▕ ◆ ☄ Argon 4 5h ▰▰▰▰▰▰ 95% • Wk ▰▰▰▰▰▰ 98% (6d23h) ▕ ❖ Claude 5h ▰▰▰▰▰▰ 100% (5h) • Wk ▰▱▱▱▱▱ 12% (3d)
 ```
 
 ## 🎨 Themes
@@ -41,21 +41,21 @@ Inside `agy`: type `/th` for a picker, or `/th <name>` (run `/skills reload` onc
 
 ### Responsive Terminal Layouts (Auto-Fit)
 AGY Pulse measures the actual rendered display width (stripping ANSI codes and accounting for wide Unicode/emoji glyphs) and automatically picks the richest layout that fits inside the terminal width:
-- **Full:** Token progress bar + all 3 quota pools with 6-block bars and reset countdowns.
-- **Medium-Full:** Compact token badge + all 3 pools with 4-block bars and reset countdowns.
-- **Compact:** Compact token badge + all 3 pools with 4-block bars (no timers).
-- **Tight:** Compact token badge + all 3 pools as percentages (no bars).
-- **Narrow / Ultra-Narrow:** Minimalist view focused on the active model (with automatic red warning if Argon 4 is depleted), with ANSI-safe truncation as a final guard.
+- **Full:** Token progress bar + both quota pools (`GEMINI MODELS` + `Claude / 3P`) with 6-block bars and reset countdowns.
+- **Medium-Full:** Compact token badge + both pools with 4-block bars and reset countdowns.
+- **Compact:** Compact token badge + both pools with 4-block bars (no timers).
+- **Tight:** Compact token badge + both pools as percentages (no bars).
+- **Narrow / Ultra-Narrow:** Minimalist view focused on the active model pool, with ANSI-safe truncation as a final guard.
 
 ---
 
 ## ✨ Key Features
 
 - 🪙 **Context Window Tokens:** Real-time token consumption (`input + output`) and percentage of available session window.
-- ⚡ **Gemini 4 Argon WTU Tracking:** Monitors specialized weekly Work-Through-Units (`gemini-argon-wtu-weekly`) and highlights depleted limits (red `0%`) with reset time.
-- ⏳ **5-Hour Rolling Quotas:** Remaining quota percentage and exact countdown to reset (`Xh Ym` / `Xm`).
-- 📅 **Weekly Quota Tracking:** Long-term quota capacity and reset schedule (`Xd Yh`).
-- 🌟 **Active Model Detection:** Automatically highlights the currently active model with a star (`★`) and dynamically labels the standard Gemini bucket as `Neon` (for **Gemini 4 Neon** and **Orchestrator (Neon)**), `Hydrogen` (for **Gemini 4 Hydrogen** and **Orchestrator (Argon)**, highlighting both `★ Hydrogen` and `★ Argon 4`), or `Gemini` (for Flash/other models).
+- 🌌 **Unified GEMINI MODELS Pool:** Tracks the shared 5-hour and weekly quota across all 6 models in the group (`Gemini 4 Neon`, `Gemini 4 Argon`, `Gemini 4 Hydrogen`, `Orchestrator (Neon)`, `Orchestrator (Argon)`, `Gemini 3.8 Flash`).
+- ⏳ **5-Hour Rolling Quotas:** Remaining quota percentage and countdown to reset (`Xh Ym` / `Xm`) when active.
+- 📅 **Weekly Quota Tracking:** Long-term 7-day quota capacity and reset schedule (`Xd Yh`).
+- 🌟 **Active Model Detection:** Automatically highlights the currently active pool with a star (`★`) and dynamically adapts the Gemini pool label and icon to match your active model (`Neon`, `Argon 4`, `Hydrogen`, `Orch Neon`, `Orch Argon`, `Flash`, or `Gemini`).
 - 🎨 **Adaptive ANSI Color Coding:**
   - 🟢 **≥ 50%** remaining — Safe (Green)
   - 🟡 **20% – 50%** — Warning (Yellow)
@@ -159,7 +159,7 @@ In `%USERPROFILE%\.gemini\antigravity-cli\settings.json` (ensure `%USERPROFILE%\
 You can test the statusline anytime by piping mock telemetry JSON into stdin:
 
 ```bash
-echo '{"terminal_width": 140, "model": {"id": "gemini-4-hydrogen-high", "display_name": "Gemini 4 Hydrogen (High)"}, "context_window": {"total_input_tokens": 125000, "total_output_tokens": 25000, "context_window_size": 1048576, "used_percentage": 14.3}, "quota": {"gemini-5h": {"remaining_fraction": 0.85, "reset_in_seconds": 3600}, "gemini-weekly": {"remaining_fraction": 0.95, "reset_in_seconds": 518400}, "gemini-argon-wtu-weekly": {"remaining_fraction": 1.0, "reset_in_seconds": 498000}, "3p-5h": {"remaining_fraction": 1.0, "reset_in_seconds": 18000}, "3p-weekly": {"remaining_fraction": 0.5, "reset_in_seconds": 259200}}}' | python3 agy_statusline.py
+echo '{"terminal_width": 140, "model": {"id": "gemini-4-argon-medium", "display_name": "Gemini 4 Argon (Medium)"}, "context_window": {"total_input_tokens": 125000, "total_output_tokens": 25000, "context_window_size": 1048576, "used_percentage": 14.3}, "quota": {"gemini-5h": {"remaining_fraction": 0.9499, "reset_in_seconds": 0}, "gemini-weekly": {"remaining_fraction": 0.9825, "reset_in_seconds": 602580}, "3p-5h": {"remaining_fraction": 1.0, "reset_in_seconds": 18000}, "3p-weekly": {"remaining_fraction": 0.5, "reset_in_seconds": 259200}}}' | python3 agy_statusline.py
 ```
 
 ---

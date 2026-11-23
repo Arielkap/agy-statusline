@@ -2,9 +2,9 @@
 """
 Antigravity CLI (agy) Custom Statusline  -  7 themes: neon | ember | matrix | beskar | arctic | sunset | luna
 Renders context tokens + 5h / weekly quotas (with progress bars) for:
-- Gemini pool (Neon / Hydrogen / Flash)
-- Gemini 4 Argon (weekly WTU)
-- Claude / 3P
+- Unified GEMINI MODELS pool (Gemini 4 Neon, Gemini 4 Argon, Gemini 4 Hydrogen,
+  Orchestrator (Neon), Orchestrator (Argon), Gemini 3.8 Flash)
+- Claude / 3P pool
 
 Theme selection (first match wins):
   1. argv[1]                           e.g.  agy_statusline.py ember
@@ -246,7 +246,8 @@ def main():
         f"{bar(ctx_left, 8)} {dim}{used_pct:.1f}% used{RST}"
     )
 
-    # 2. Active model
+    # 2. Active model (Unified GEMINI MODELS pool: Neon, Argon, Hydrogen,
+    #    Orchestrator (Neon), Orchestrator (Argon), Gemini 3.8 Flash)
     model_info = data.get("model") or {}
     model_name = " ".join(str(model_info.get(k) or "") for k in ("id", "display_name")).lower()
 
@@ -255,44 +256,50 @@ def main():
     is_argon = "argon" in model_name or "g1-pro" in model_name
     is_claude = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p", "gpt"])
     is_flash = "flash" in model_name
-    is_hydrogen = "hydrogen" in model_name or (is_orch and not is_neon)
-    is_gemini_active = (not is_argon and not is_claude) or is_orch
+    is_hydrogen = "hydrogen" in model_name
+    is_gemini_active = not is_claude
 
-    if is_neon:
-        gemini_label = "Neon"
+    if is_orch and is_argon:
+        gemini_label, gemini_icon_key = "Orch Argon", "Argon 4"
+    elif is_orch and is_neon:
+        gemini_label, gemini_icon_key = "Orch Neon", "Neon"
+    elif is_orch:
+        gemini_label, gemini_icon_key = "Orchestrator", "Gemini"
+    elif is_argon:
+        gemini_label, gemini_icon_key = "Argon 4", "Argon 4"
+    elif is_neon:
+        gemini_label, gemini_icon_key = "Neon", "Neon"
     elif is_hydrogen:
-        gemini_label = "Hydrogen"
+        gemini_label, gemini_icon_key = "Hydrogen", "Hydrogen"
+    elif is_flash:
+        gemini_label, gemini_icon_key = "Flash", "Gemini"
     else:
-        gemini_label = "Gemini"
+        gemini_label, gemini_icon_key = "Gemini", "Gemini"
 
-    # 3. Quotas
+    # 3. Quotas (Unified GEMINI MODELS pool + Claude/3P pool)
     quota = data.get("quota") or {}
-    g_5h = quota.get("gemini-5h") or {}
-    g_wk = quota.get("gemini-weekly") or {}
-    a_5h = quota.get("gemini-argon-5h") or quota.get("argon-5h") or {}
-    a_wk = (
-        quota.get("gemini-argon-wtu-weekly")
+    g_5h = quota.get("gemini-5h") or quota.get("gemini-argon-5h") or quota.get("argon-5h") or {}
+    g_wk = (
+        quota.get("gemini-weekly")
         or quota.get("gemini-argon-weekly")
+        or quota.get("gemini-argon-wtu-weekly")
         or quota.get("argon-weekly")
         or {}
     )
     p_5h = quota.get("3p-5h") or {}
     p_wk = quota.get("3p-weekly") or {}
 
-    if not g_5h or not g_wk or not a_wk or not p_5h or not p_wk:
+    if not g_5h or not g_wk or not p_5h or not p_wk:
         for k, v in quota.items():
+            if not isinstance(v, dict):
+                continue
             kl = k.lower()
-            if "argon" in kl:
-                if "5h" in kl and not a_5h:
-                    a_5h = v
-                elif not a_wk:
-                    a_wk = v
-            elif any(x in kl for x in ["gemini", "hydrogen", "neon"]):
+            if any(x in kl for x in ["gemini", "hydrogen", "neon", "argon", "flash", "orchestrator"]):
                 if "5h" in kl and not g_5h:
                     g_5h = v
                 elif "week" in kl and not g_wk:
                     g_wk = v
-            elif any(x in kl for x in ["3p", "claude", "sonnet"]):
+            elif any(x in kl for x in ["3p", "claude", "sonnet", "opus", "gpt"]):
                 if "5h" in kl and not p_5h:
                     p_5h = v
                 elif "week" in kl and not p_wk:
@@ -305,8 +312,9 @@ def main():
         active: bool,
         bar_width: int = 6,
         show_timers: bool = True,
+        icon_key: str = "",
     ) -> str:
-        icon = th["icons"].get(name, "•")
+        icon = th["icons"].get(icon_key or name, "•")
         if active:
             label = f"{th['active']}{BOLD}{th['star']} {icon} {name}{RST}"
         else:
@@ -321,7 +329,9 @@ def main():
                 else:
                     txt = f"{dim}{tag}{RST} {col}{p:.0f}%{RST}"
                 if show_timers:
-                    txt += f" {dim}({fmt_time(b.get('reset_in_seconds', 0))}){RST}"
+                    t_str = fmt_time(b.get("reset_in_seconds") or 0)
+                    if t_str != "-":
+                        txt += f" {dim}({t_str}){RST}"
                 parts.append(txt)
         if not parts:
             return f"{label} {dim}--{RST}"
@@ -329,19 +339,16 @@ def main():
 
     def buckets(bar_width: int, show_timers: bool):
         return (
-            render_bucket(gemini_label, g_5h, g_wk, is_gemini_active, bar_width, show_timers),
-            render_bucket("Argon 4", a_5h, a_wk, is_argon, bar_width, show_timers),
-            render_bucket("Claude", p_5h, p_wk, is_claude, bar_width, show_timers),
+            render_bucket(gemini_label, g_5h, g_wk, is_gemini_active, bar_width, show_timers, gemini_icon_key),
+            render_bucket("Claude", p_5h, p_wk, is_claude, bar_width, show_timers, "Claude"),
         )
 
     tok_med = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}/{fmt_tokens(max_tokens)}{RST} {dim}({used_pct:.0f}%){RST}"
     tok_short = f"{th['tok']}{th['tok_icon']} {fmt_tokens(tot_tokens)}{RST}"
 
     def active_only(bar_width: int) -> str:
-        g, a, cl = buckets(bar_width, False)
-        active_part = a if is_argon else (cl if is_claude else g)
-        if not is_argon and a_wk.get("remaining_fraction") == 0:
-            return f"{tok_short}{sep}{active_part}{sep}{th['low']}Argon: 0%{RST}"
+        g, cl = buckets(bar_width, False)
+        active_part = cl if is_claude else g
         return f"{tok_short}{sep}{active_part}"
 
     # Pick the richest layout whose actual rendered width fits inside the terminal
