@@ -2,8 +2,9 @@
 """
 Antigravity CLI (agy) Custom Statusline  -  7 themes: neon | ember | matrix | beskar | arctic | sunset | luna
 Renders context tokens + 5h / weekly quotas (with progress bars) for:
-- Unified GEMINI MODELS pool (Gemini 4 Neon, Gemini 4 Argon, Gemini 4 Hydrogen,
-  Orchestrator (Neon), Orchestrator (Argon), Gemini 3.8 Flash)
+- Unified GEMINI MODELS pool (Gemini 4 Neon, Gemini 4 Carbon, Gemini 4 Argon,
+  Gemini 4 Hydrogen, Orchestrator (Neon), Orchestrator (Carbon),
+  Orchestrator (Argon), Gemini 3.8 Flash)
 - Claude / 3P pool
 
 Theme selection (first match wins):
@@ -114,7 +115,7 @@ THEMES = {
         "bar": ("▰", "▱"), "star": "◆", "tok_icon": "◈",
         "ok": c(51), "mid": c(213), "low": c(197),
         "label": c(147), "active": c(219),
-        "icons": {"Neon": "⚡", "Hydrogen": "💠", "Gemini": "✧", "Argon 4": "☄", "Claude": "❖"},
+        "icons": {"Neon": "⚡", "Carbon": "💎", "Hydrogen": "💠", "Gemini": "✧", "Argon 4": "☄", "Claude": "❖"},
     },
     # Forge: orange / red / gold
     "ember": {
@@ -122,7 +123,7 @@ THEMES = {
         "bar": ("█", "░"), "star": "★", "tok_icon": "🔥",
         "ok": c(220), "mid": c(208), "low": c(196),
         "label": c(180), "active": c(202),
-        "icons": {"Neon": "🌋", "Hydrogen": "💧", "Gemini": "🔸", "Argon 4": "⚔️ ", "Claude": "🛡️ "},
+        "icons": {"Neon": "🌋", "Carbon": "💎", "Hydrogen": "💧", "Gemini": "🔸", "Argon 4": "⚔️ ", "Claude": "🛡️ "},
     },
     # Terminal hacker: greens
     "matrix": {
@@ -130,7 +131,7 @@ THEMES = {
         "bar": ("▓", "░"), "star": "▶", "tok_icon": "▣",
         "ok": c(46), "mid": c(148), "low": c(160),
         "label": c(71), "active": c(118),
-        "icons": {"Neon": "λ", "Hydrogen": "∆", "Gemini": "∑", "Argon 4": "Ω", "Claude": "Ψ"},
+        "icons": {"Neon": "λ", "Carbon": "Φ", "Hydrogen": "∆", "Gemini": "∑", "Argon 4": "Ω", "Claude": "Ψ"},
     },
     # Mandalorian: beskar steel + gold
     "beskar": {
@@ -138,7 +139,7 @@ THEMES = {
         "bar": ("■", "□"), "star": "✪", "tok_icon": "⛨",
         "ok": c(220), "mid": c(172), "low": c(160),
         "label": c(252), "active": c(226),
-        "icons": {"Neon": "⚔", "Hydrogen": "⛏", "Gemini": "⚙", "Argon 4": "☠", "Claude": "⚜"},
+        "icons": {"Neon": "⚔", "Carbon": "⬡", "Hydrogen": "⛏", "Gemini": "⚙", "Argon 4": "☠", "Claude": "⚜"},
     },
     # Arctic: ice blue / white / teal
     "arctic": {
@@ -146,7 +147,7 @@ THEMES = {
         "bar": ("▮", "▯"), "star": "❄", "tok_icon": "❅",
         "ok": c(159), "mid": c(111), "low": c(204),
         "label": c(153), "active": c(231),
-        "icons": {"Neon": "✺", "Hydrogen": "❆", "Gemini": "✦", "Argon 4": "◇", "Claude": "✱"},
+        "icons": {"Neon": "✺", "Carbon": "❖", "Hydrogen": "❆", "Gemini": "✦", "Argon 4": "◇", "Claude": "✱"},
     },
     # Sunset synthwave: hot pink / orange / purple
     "sunset": {
@@ -154,7 +155,7 @@ THEMES = {
         "bar": ("●", "○"), "star": "☀", "tok_icon": "✿",
         "ok": c(215), "mid": c(205), "low": c(124),
         "label": c(183), "active": c(209),
-        "icons": {"Neon": "🌅", "Hydrogen": "🌴", "Gemini": "🌙", "Argon 4": "🔮", "Claude": "🦋"},
+        "icons": {"Neon": "🌅", "Carbon": "💎", "Hydrogen": "🌴", "Gemini": "🌙", "Argon 4": "🔮", "Claude": "🦋"},
     },
     # Luna: deep purple / violet / lavender
     "luna": {
@@ -162,7 +163,7 @@ THEMES = {
         "bar": ("◆", "◇"), "star": "☾", "tok_icon": "🌙",
         "ok": c(177), "mid": c(135), "low": c(197),
         "label": c(183), "active": c(207),
-        "icons": {"Neon": "🔮", "Hydrogen": "✧", "Gemini": "☽", "Argon 4": "✦", "Claude": "❋"},
+        "icons": {"Neon": "🔮", "Carbon": "◈", "Hydrogen": "✧", "Gemini": "☽", "Argon 4": "✦", "Claude": "❋"},
     },
 }
 
@@ -219,7 +220,7 @@ def main():
         return f"{col}{full * filled}{dim}{empty * (width - filled)}{RST}"
 
     try:
-        raw_input = sys.stdin.read().strip()
+        raw_input = sys.stdin.read(65536).strip()
         if not raw_input:
             print(f"{th['tok']}{th['tok_icon']} Tokens: -- {dim}{th['sep']}{RST} 5h: -- {dim}{th['sep']}{RST} Wk: --{RST}")
             return
@@ -246,13 +247,15 @@ def main():
         f"{bar(ctx_left, 8)} {dim}{used_pct:.1f}% used{RST}"
     )
 
-    # 2. Active model (Unified GEMINI MODELS pool: Neon, Argon, Hydrogen,
-    #    Orchestrator (Neon), Orchestrator (Argon), Gemini 3.8 Flash)
+    # 2. Active model (Unified GEMINI MODELS pool: Neon, Carbon, Argon, Hydrogen,
+    #    Orchestrator (Neon/Carbon/Argon), Gemini 3.8 Flash)
     model_info = data.get("model") or {}
+    model_id = str(model_info.get("id") or "").strip().lower()
     model_name = " ".join(str(model_info.get(k) or "") for k in ("id", "display_name")).lower()
 
     is_orch = "orchestrator" in model_name
     is_neon = "neon" in model_name
+    is_carbon = "carbon" in model_name or model_id == "gemini-pro-orchestrator"
     is_argon = "argon" in model_name or "g1-pro" in model_name
     is_claude = any(x in model_name for x in ["claude", "sonnet", "opus", "haiku", "3p", "gpt"])
     is_flash = "flash" in model_name
@@ -263,12 +266,16 @@ def main():
         gemini_label, gemini_icon_key = "Orch Argon", "Argon 4"
     elif is_orch and is_neon:
         gemini_label, gemini_icon_key = "Orch Neon", "Neon"
+    elif is_orch and is_carbon:
+        gemini_label, gemini_icon_key = "Orch Carbon", "Carbon"
     elif is_orch:
         gemini_label, gemini_icon_key = "Orchestrator", "Gemini"
     elif is_argon:
         gemini_label, gemini_icon_key = "Argon 4", "Argon 4"
     elif is_neon:
         gemini_label, gemini_icon_key = "Neon", "Neon"
+    elif is_carbon:
+        gemini_label, gemini_icon_key = "Carbon", "Carbon"
     elif is_hydrogen:
         gemini_label, gemini_icon_key = "Hydrogen", "Hydrogen"
     elif is_flash:
@@ -294,7 +301,7 @@ def main():
             if not isinstance(v, dict):
                 continue
             kl = k.lower()
-            if any(x in kl for x in ["gemini", "hydrogen", "neon", "argon", "flash", "orchestrator"]):
+            if any(x in kl for x in ["gemini", "hydrogen", "neon", "carbon", "argon", "flash", "orchestrator"]):
                 if "5h" in kl and not g_5h:
                     g_5h = v
                 elif "week" in kl and not g_wk:

@@ -8,7 +8,7 @@
 [![Platform: Antigravity CLI](https://img.shields.io/badge/Tool-Antigravity%20CLI%20(agy)-purple.svg)]()
 
 **AGY Pulse** (`agy-statusline`) is a lightweight, **zero-dependency** statusline extension for Google's **Antigravity CLI (`agy`)**.  
-Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for the unified **GEMINI MODELS** pool (**Gemini 4 Neon**, **Gemini 4 Argon**, **Gemini 4 Hydrogen**, **Orchestrator (Neon)**, **Orchestrator (Argon)**, **Gemini 3.8 Flash**) and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
+Renders real-time session context token usage, 5-hour rolling quotas, and weekly quota limits (with progress bars) for the unified **GEMINI MODELS** pool (**Gemini 4 Neon**, **Gemini 4 Carbon**, **Gemini 4 Argon**, **Gemini 4 Hydrogen**, **Orchestrator (Neon)**, **Orchestrator (Carbon)**, **Orchestrator (Argon)**, **Gemini 3.8 Flash**) and **Claude / 3P** models directly in your terminal footer. Ships with **7 switchable themes**.
 
 ---
 
@@ -22,13 +22,13 @@ Renders real-time session context token usage, 5-hour rolling quotas, and weekly
 
 | Theme | Palette | Icons / bars |
 | :-- | :-- | :-- |
-| `neon` (default) | cyan / magenta / violet | ⚡ 💠 ☄ ❖ `▰▱` |
-| `ember` | orange / red / gold | 🌋 💧 ⚔️ 🛡️ `█░` |
-| `matrix` | greens | λ ∆ Ω Ψ `▓░` |
-| `beskar` | steel / gold | ⚔ ⛏ ☠ ⚜ `■□` |
-| `arctic` | ice blue / white | ✺ ❆ ◇ ✱ `▮▯` |
-| `sunset` | pink / orange / purple | 🌅 🌴 🔮 🦋 `●○` |
-| `luna` | deep purple / lavender | 🔮 ✧ ✦ ❋ `◆◇` |
+| `neon` (default) | cyan / magenta / violet | ⚡ 💎 💠 ☄ ❖ `▰▱` |
+| `ember` | orange / red / gold | 🌋 💎 💧 ⚔️ 🛡️ `█░` |
+| `matrix` | greens | λ Φ ∆ Ω Ψ `▓░` |
+| `beskar` | steel / gold | ⚔ ⬡ ⛏ ☠ ⚜ `■□` |
+| `arctic` | ice blue / white | ✺ ❖ ❆ ◇ ✱ `▮▯` |
+| `sunset` | pink / orange / purple | 🌅 💎 🌴 🔮 🦋 `●○` |
+| `luna` | deep purple / lavender | 🔮 ◈ ✧ ✦ ❋ `◆◇` |
 
 Switch on the fly (the choice is stored in `~/.agy_statusline_theme`, shared by all terminals):
 
@@ -52,10 +52,10 @@ AGY Pulse measures the actual rendered display width (stripping ANSI codes and a
 ## ✨ Key Features
 
 - 🪙 **Context Window Tokens:** Real-time token consumption (`input + output`) and percentage of available session window.
-- 🌌 **Unified GEMINI MODELS Pool:** Tracks the shared 5-hour and weekly quota across all 6 models in the group (`Gemini 4 Neon`, `Gemini 4 Argon`, `Gemini 4 Hydrogen`, `Orchestrator (Neon)`, `Orchestrator (Argon)`, `Gemini 3.8 Flash`).
+- 🌌 **Unified GEMINI MODELS Pool:** Tracks the shared 5-hour and weekly quota across all models in the group (`Gemini 4 Neon`, `Gemini 4 Carbon`, `Gemini 4 Argon`, `Gemini 4 Hydrogen`, `Orchestrator (Neon)`, `Orchestrator (Carbon)`, `Orchestrator (Argon)`, `Gemini 3.8 Flash`).
 - ⏳ **5-Hour Rolling Quotas:** Remaining quota percentage and countdown to reset (`Xh Ym` / `Xm`) when active.
 - 📅 **Weekly Quota Tracking:** Long-term 7-day quota capacity and reset schedule (`Xd Yh`).
-- 🌟 **Active Model Detection:** Automatically highlights the currently active pool with a star (`★`) and dynamically adapts the Gemini pool label and icon to match your active model (`Neon`, `Argon 4`, `Hydrogen`, `Orch Neon`, `Orch Argon`, `Flash`, or `Gemini`).
+- 🌟 **Active Model Detection:** Automatically highlights the currently active pool with a star (`★`) and dynamically adapts the Gemini pool label and icon to match your active model (`Neon`, `Carbon`, `Argon 4`, `Hydrogen`, `Orch Neon`, `Orch Carbon`, `Orch Argon`, `Flash`, or `Gemini`).
 - 🎨 **Adaptive ANSI Color Coding:**
   - 🟢 **≥ 50%** remaining — Safe (Green)
   - 🟡 **20% – 50%** — Warning (Yellow)
